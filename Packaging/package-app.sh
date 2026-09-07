@@ -18,6 +18,11 @@
 
 set -euo pipefail
 
+if ! command -v create-dmg >/dev/null 2>&1; then
+    echo "error: create-dmg not found. Install with: brew install create-dmg" >&2
+    exit 1
+fi
+
 VERSION="${1:-1.0.0}"
 BUILD_NUMBER="$(date +%Y%m%d%H%M%S)"
 
@@ -100,10 +105,20 @@ DMG_STAGING="$DIST_DIR/dmg-staging"
 rm -rf "$DMG_STAGING"
 mkdir -p "$DMG_STAGING"
 cp -R "$APP_BUNDLE" "$DMG_STAGING/"
-ln -s /Applications "$DMG_STAGING/Applications"
 
 DMG_PATH="$DIST_DIR/${APP_NAME}_${VERSION}_aarch64.dmg"
-hdiutil create -volname "$DISPLAY_NAME" -srcfolder "$DMG_STAGING" -ov -format UDZO "$DMG_PATH"
+rm -f "$DMG_PATH"
+create-dmg \
+    --volname "$DISPLAY_NAME" \
+    --background "$ROOT_DIR/Packaging/dmg-background.png" \
+    --window-size 660 400 \
+    --icon-size 128 \
+    --icon "$APP_NAME.app" 180 190 \
+    --app-drop-link 480 190 \
+    --hide-extension "$APP_NAME.app" \
+    --no-internet-enable \
+    "$DMG_PATH" \
+    "$DMG_STAGING/"
 
 codesign --force --sign "$SIGN_IDENTITY" "$DMG_PATH"
 xcrun notarytool submit "$DMG_PATH" "${NOTARY_AUTH[@]}" --wait
