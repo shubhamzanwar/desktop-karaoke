@@ -34,9 +34,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 button.image = NSImage(systemSymbolName: "music.note", accessibilityDescription: "Desktop Karaoke")
             }
             button.target = self
-            button.action = #selector(togglePanel)
+            button.action = #selector(statusItemClicked)
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
         statusItem = item
+    }
+
+    @objc private func statusItemClicked() {
+        if NSApp.currentEvent?.type == .rightMouseUp {
+            showStatusMenu()
+        } else {
+            togglePanel()
+        }
+    }
+
+    private func showStatusMenu() {
+        let menu = NSMenu()
+        menu.addItem(withTitle: "Open Spotify", action: #selector(openSpotify), keyEquivalent: "")
+            .target = self
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "Quit Desktop Karaoke", action: #selector(quitApp), keyEquivalent: "")
+            .target = self
+
+        statusItem?.menu = menu
+        statusItem?.button?.performClick(nil)
+        statusItem?.menu = nil
+    }
+
+    @objc private func openSpotify() {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.spotify.client") else {
+            return
+        }
+        NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+    }
+
+    @objc private func quitApp() {
+        NSApp.terminate(nil)
     }
 
     private func setupPanel() {
