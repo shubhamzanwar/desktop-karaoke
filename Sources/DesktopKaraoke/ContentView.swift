@@ -18,6 +18,7 @@ struct ContentView: View {
                 .foregroundColor(.white)
                 .textShadow()
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 24)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -28,6 +29,8 @@ struct ContentView: View {
                     .font(.fredoka(size: 24, weight: .bold))
                     .foregroundColor(.white)
                     .textShadow()
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
                     .transition(.asymmetric(
                         insertion: .move(edge: .bottom).combined(with: .opacity),
                         removal: .move(edge: .top).combined(with: .opacity)
@@ -38,9 +41,10 @@ struct ContentView: View {
                         .font(.fredoka(size: 17, weight: .medium))
                         .foregroundColor(.white.opacity(index == 0 ? 0.4 : 0.25))
                         .textShadow()
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .multilineTextAlignment(.center)
             .padding(.horizontal, 24)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(.top, 20)
