@@ -63,7 +63,7 @@ let attrs: [NSAttributedString.Key: Any] = [
     .paragraphStyle: paragraph,
 ]
 let attrString = NSAttributedString(string: text, attributes: attrs)
-attrString.draw(in: NSRect(x: 0, y: 118, width: CGFloat(width), height: 24))
+attrString.draw(in: NSRect(x: 0, y: CGFloat(height) - 60, width: CGFloat(width), height: 24))
 
 NSGraphicsContext.restoreGraphicsState()
 
