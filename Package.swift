@@ -7,7 +7,11 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "DesktopKaraoke",
-            path: "Sources/DesktopKaraoke"
+            path: "Sources/DesktopKaraoke",
+            resources: [
+                .copy("Resources/Fonts/Fredoka.ttf"),
+                .copy("Resources/Fonts/OFL.txt")
+            ]
         ),
         .testTarget(
             name: "DesktopKaraokeTests",

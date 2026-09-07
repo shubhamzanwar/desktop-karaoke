@@ -14,7 +14,7 @@ struct ContentView: View {
         switch viewModel.displayState {
         case .status(let text):
             Text(text)
-                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                .font(.fredoka(size: 20, weight: .semiBold))
                 .foregroundColor(.white)
                 .textShadow()
                 .multilineTextAlignment(.center)
@@ -25,7 +25,7 @@ struct ContentView: View {
             VStack(spacing: 12) {
                 Text(current)
                     .id(current)
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(.fredoka(size: 24, weight: .bold))
                     .foregroundColor(.white)
                     .textShadow()
                     .transition(.asymmetric(
@@ -35,7 +35,7 @@ struct ContentView: View {
 
                 ForEach(Array(upcoming.enumerated()), id: \.offset) { index, line in
                     Text(line)
-                        .font(.system(size: 17, weight: .medium, design: .rounded))
+                        .font(.fredoka(size: 17, weight: .medium))
                         .foregroundColor(.white.opacity(index == 0 ? 0.4 : 0.25))
                         .textShadow()
                 }
@@ -53,5 +53,21 @@ private extension View {
         self
             .shadow(color: .black.opacity(0.9), radius: 1, x: 0, y: 0)
             .shadow(color: .black.opacity(0.9), radius: 4, x: 0, y: 1)
+    }
+}
+
+extension Font {
+    enum FredokaWeight: String {
+        case regular = "Fredoka-Regular"
+        case medium = "Fredoka-Medium"
+        case semiBold = "Fredoka-SemiBold"
+        case bold = "Fredoka-Bold"
+    }
+
+    /// SwiftUI's `.weight()` modifier is ignored on custom fonts, so each
+    /// weight needs its own named-instance PostScript name from the
+    /// variable font.
+    static func fredoka(size: CGFloat, weight: FredokaWeight) -> Font {
+        .custom(weight.rawValue, size: size)
     }
 }
