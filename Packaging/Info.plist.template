@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>DesktopKaraoke</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.shubhamzanwar.DesktopKaraoke</string>
+    <key>CFBundleName</key>
+    <string>Desktop Karaoke</string>
+    <key>CFBundleDisplayName</key>
+    <string>Desktop Karaoke</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>__VERSION__</string>
+    <key>CFBundleVersion</key>
+    <string>__BUILD__</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Desktop Karaoke reads what's currently playing in the Spotify app to display synced lyrics.</string>
+</dict>
+</plist>

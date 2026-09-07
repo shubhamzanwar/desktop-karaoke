@@ -17,3 +17,6 @@ DerivedData/
 *.pcm
 *.swiftmodule
 *.swiftsourceinfo
+
+# Packaging output
+dist/
