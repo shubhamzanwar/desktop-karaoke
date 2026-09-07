@@ -25,7 +25,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = item.button {
-            button.image = NSImage(systemSymbolName: "music.note", accessibilityDescription: "Desktop Karaoke")
+            if let url = Bundle.module.url(forResource: "MenuBarIcon", withExtension: "png"),
+               let icon = NSImage(contentsOf: url) {
+                icon.isTemplate = true
+                icon.size = NSSize(width: 18, height: 18)
+                button.image = icon
+            } else {
+                button.image = NSImage(systemSymbolName: "music.note", accessibilityDescription: "Desktop Karaoke")
+            }
             button.target = self
             button.action = #selector(togglePanel)
         }

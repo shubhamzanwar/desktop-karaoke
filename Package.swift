@@ -10,7 +10,8 @@ let package = Package(
             path: "Sources/DesktopKaraoke",
             resources: [
                 .copy("Resources/Fonts/Fredoka.ttf"),
-                .copy("Resources/Fonts/OFL.txt")
+                .copy("Resources/Fonts/OFL.txt"),
+                .copy("Resources/MenuBarIcon.png")
             ]
         ),
         .testTarget(
