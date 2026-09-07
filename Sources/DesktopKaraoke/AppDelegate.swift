@@ -60,13 +60,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func tick() {
         switch spotify.poll() {
         case .notRunning:
-            currentTrackId = nil
-            currentLyrics = .notFound
+            resetTrack()
             setDisplay(.status("Spotify isn't running"))
 
         case .noTrack:
-            currentTrackId = nil
-            currentLyrics = .notFound
+            resetTrack()
             setDisplay(.status("No track playing"))
 
         case .track(let state):
@@ -104,17 +102,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func updateDisplay(for position: TimeInterval) {
-        switch currentLyrics {
-        case .synced(let lines):
-            let index = lines.currentIndex(at: position)
-            let current = index.map { lines[$0].text } ?? "♪"
-            let upcoming = lines.upcoming(after: index, count: 2)
-            setDisplay(.lyrics(current: current, upcoming: upcoming))
-        case .plainOnly:
-            setDisplay(.status("Lyrics found, but not synced"))
-        case .notFound:
-            break
-        }
+        guard let display = displayState(for: currentLyrics, position: position) else { return }
+        setDisplay(display)
+    }
+
+    private func resetTrack() {
+        currentTrackId = nil
+        currentLyrics = .notFound
     }
 
     private func setDisplay(_ state: DisplayState) {

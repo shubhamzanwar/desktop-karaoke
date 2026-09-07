@@ -75,6 +75,23 @@ final class LyricsService {
     }
 }
 
+/// Given the currently known lyrics and playback position, decides what the
+/// panel should show. Pure — no AppKit/network dependency — so it's testable
+/// on its own. Returns `nil` when there's nothing to show yet.
+func displayState(for lyrics: LyricsResult, position: TimeInterval) -> DisplayState? {
+    switch lyrics {
+    case .synced(let lines):
+        let index = lines.currentIndex(at: position)
+        let current = index.map { lines[$0].text } ?? "♪"
+        let upcoming = lines.upcoming(after: index, count: 2)
+        return .lyrics(current: current, upcoming: upcoming)
+    case .plainOnly:
+        return .status("Lyrics found, but not synced")
+    case .notFound:
+        return nil
+    }
+}
+
 extension Array where Element == LyricLine {
     func currentIndex(at position: TimeInterval) -> Int? {
         var result: Int? = nil

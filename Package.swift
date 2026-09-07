@@ -8,6 +8,11 @@ let package = Package(
         .executableTarget(
             name: "DesktopKaraoke",
             path: "Sources/DesktopKaraoke"
+        ),
+        .testTarget(
+            name: "DesktopKaraokeTests",
+            dependencies: ["DesktopKaraoke"],
+            path: "Tests/DesktopKaraokeTests"
         )
     ]
 )

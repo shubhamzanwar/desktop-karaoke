@@ -7,7 +7,7 @@ enum SpotifyPlayerState: String {
     case stopped
 }
 
-struct SpotifyTrackState {
+struct SpotifyTrackState: Equatable {
     let name: String
     let artist: String
     let trackId: String
@@ -16,7 +16,7 @@ struct SpotifyTrackState {
     let playerState: SpotifyPlayerState
 }
 
-enum SpotifyStatus {
+enum SpotifyStatus: Equatable {
     case notRunning
     case noTrack
     case track(SpotifyTrackState)
@@ -67,12 +67,21 @@ final class SpotifyController {
             return .noTrack
         }
 
+        return Self.parse(raw)
+    }
+
+    /// Parses the raw `"|||"`-delimited AppleScript response into a
+    /// `SpotifyStatus`. Pure and side-effect-free so it's testable without
+    /// a running Spotify.
+    static func parse(_ raw: String) -> SpotifyStatus {
         if raw == "NOT_RUNNING" { return .notRunning }
         if raw.hasPrefix("NO_TRACK") { return .noTrack }
 
         let parts = raw.components(separatedBy: "|||")
         guard parts.count == 6,
               let durationMs = Int(parts[3]),
+              // Spotify's AppleScript position is locale-formatted (e.g. "33,57"
+              // on comma-decimal systems), so normalize before parsing.
               let positionSec = Double(parts[4].replacingOccurrences(of: ",", with: ".")),
               let playerState = SpotifyPlayerState(rawValue: parts[5]) else {
             return .noTrack
