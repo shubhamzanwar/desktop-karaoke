@@ -1,11 +1,15 @@
 #!/bin/bash
 # Builds, signs, notarizes, and packages Desktop Karaoke for distribution outside the App Store.
 #
-# One-time prerequisites (see CLAUDE.md / project chat history):
+# Local use — one-time prerequisites (see CLAUDE.md / project chat history):
 #   - A "Developer ID Application" certificate installed in this machine's login keychain.
 #   - Notarization credentials stored via:
 #       xcrun notarytool store-credentials "AC_NOTARY" --apple-id "you@example.com" \
 #         --team-id "TEAMID" --password "app-specific-password"
+#
+# CI use — set these env vars instead (no local keychain profile needed):
+#   APPLE_SIGNING_IDENTITY, APPLE_ID, APPLE_PASSWORD, APPLE_TEAM_ID
+# (the cert itself must already be imported into the keychain this script runs under)
 #
 # Usage:
 #   Packaging/package-app.sh [version]
@@ -20,9 +24,15 @@ BUILD_NUMBER="$(date +%Y%m%d%H%M%S)"
 APP_NAME="DesktopKaraoke"
 DISPLAY_NAME="Desktop Karaoke"
 BUNDLE_ID="com.shubhamzanwar.DesktopKaraoke"
-TEAM_ID="6F84XC6CQP"
-SIGN_IDENTITY="Developer ID Application: Shubham Badrinarayan Zanwar ($TEAM_ID)"
+TEAM_ID="${APPLE_TEAM_ID:-6F84XC6CQP}"
+SIGN_IDENTITY="${APPLE_SIGNING_IDENTITY:-Developer ID Application: Shubham Badrinarayan Zanwar ($TEAM_ID)}"
 NOTARY_PROFILE="AC_NOTARY"
+
+if [ -n "${APPLE_ID:-}" ] && [ -n "${APPLE_PASSWORD:-}" ]; then
+    NOTARY_AUTH=(--apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$TEAM_ID")
+else
+    NOTARY_AUTH=(--keychain-profile "$NOTARY_PROFILE")
+fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
@@ -76,7 +86,7 @@ echo "==> Submitting for notarization"
 NOTARIZE_ZIP="$DIST_DIR/$APP_NAME-notarize.zip"
 ditto -c -k --keepParent "$APP_BUNDLE" "$NOTARIZE_ZIP"
 
-xcrun notarytool submit "$NOTARIZE_ZIP" --keychain-profile "$NOTARY_PROFILE" --wait
+xcrun notarytool submit "$NOTARIZE_ZIP" "${NOTARY_AUTH[@]}" --wait
 
 echo "==> Stapling notarization ticket"
 xcrun stapler staple "$APP_BUNDLE"
@@ -86,11 +96,11 @@ echo "==> Verifying Gatekeeper acceptance"
 spctl -a -vvv --type execute "$APP_BUNDLE"
 
 echo "==> Building DMG"
-DMG_PATH="$DIST_DIR/$DISPLAY_NAME-$VERSION.dmg"
+DMG_PATH="$DIST_DIR/${APP_NAME}_${VERSION}_aarch64.dmg"
 hdiutil create -volname "$DISPLAY_NAME" -srcfolder "$APP_BUNDLE" -ov -format UDZO "$DMG_PATH"
 
 codesign --force --sign "$SIGN_IDENTITY" "$DMG_PATH"
-xcrun notarytool submit "$DMG_PATH" --keychain-profile "$NOTARY_PROFILE" --wait
+xcrun notarytool submit "$DMG_PATH" "${NOTARY_AUTH[@]}" --wait
 xcrun stapler staple "$DMG_PATH"
 
 echo "==> Done: $DMG_PATH"

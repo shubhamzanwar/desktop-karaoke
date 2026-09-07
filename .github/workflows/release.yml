@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build signed + notarized DMG
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Import certificate into temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          echo "$APPLE_CERTIFICATE" | base64 --decode > $RUNNER_TEMP/certificate.p12
+          security import $RUNNER_TEMP/certificate.p12 -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+          # Build
+          VERSION=${GITHUB_REF#refs/tags/v}
+          Packaging/package-app.sh "$VERSION"
+
+      - name: Extract version
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Push release to website repo
+        env:
+          WEBSITE_DEPLOY_KEY: ${{ secrets.WEBSITE_DEPLOY_KEY }}
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          DMG_NAME="DesktopKaraoke_${VERSION}_aarch64.dmg"
+          DMG_PATH="dist/${DMG_NAME}"
+
+          # Setup SSH for pushing to the website repo
+          mkdir -p ~/.ssh
+          echo "$WEBSITE_DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+          # Clone website repo
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/deploy_key" git clone git@github.com:shubhamzanwar/shubhamzanwar.git /tmp/website
+
+          # Copy full website (index.html, screenshots, etc.)
+          mkdir -p /tmp/website/static/desktop-karaoke
+          cp -R website/* /tmp/website/static/desktop-karaoke/
+
+          # Copy the DMG into the release folder
+          mkdir -p /tmp/website/static/desktop-karaoke/releases/v${VERSION}
+          cp "$DMG_PATH" /tmp/website/static/desktop-karaoke/releases/v${VERSION}/
+
+          # Update download link to point to the new release
+          sed -i '' "s|releases/v[0-9.]*/DesktopKaraoke_.*\.dmg|releases/v${VERSION}/${DMG_NAME}|g" /tmp/website/static/desktop-karaoke/index.html
+
+          # Commit and push
+          cd /tmp/website
+          git config user.name "Desktop Karaoke Release Bot"
+          git config user.email "noreply@shubhamzanwar.com"
+          git add -A
+          git commit -m "release: Desktop Karaoke v${VERSION}" || echo "No changes to commit"
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/deploy_key" git push
