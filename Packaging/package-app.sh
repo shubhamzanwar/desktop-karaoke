@@ -96,8 +96,14 @@ echo "==> Verifying Gatekeeper acceptance"
 spctl -a -vvv --type execute "$APP_BUNDLE"
 
 echo "==> Building DMG"
+DMG_STAGING="$DIST_DIR/dmg-staging"
+rm -rf "$DMG_STAGING"
+mkdir -p "$DMG_STAGING"
+cp -R "$APP_BUNDLE" "$DMG_STAGING/"
+ln -s /Applications "$DMG_STAGING/Applications"
+
 DMG_PATH="$DIST_DIR/${APP_NAME}_${VERSION}_aarch64.dmg"
-hdiutil create -volname "$DISPLAY_NAME" -srcfolder "$APP_BUNDLE" -ov -format UDZO "$DMG_PATH"
+hdiutil create -volname "$DISPLAY_NAME" -srcfolder "$DMG_STAGING" -ov -format UDZO "$DMG_PATH"
 
 codesign --force --sign "$SIGN_IDENTITY" "$DMG_PATH"
 xcrun notarytool submit "$DMG_PATH" "${NOTARY_AUTH[@]}" --wait
